@@ -1,0 +1,16 @@
+{
+  "model": "mlp",
+  "family": "Multilayer perceptron",
+  "config": "{\"hidden_layer_sizes\": [64, 32], \"alpha\": 0.001, \"learning_rate_init\": 0.001, \"max_iter\": 50, \"batch_size\": 1024, \"early_stopping\": false}",
+  "cv_macro_f1": 0.8931752024547166,
+  "cv_macro_f1_std": 0.024520771620572743,
+  "cv_top1": 0.7452682386301974,
+  "cv_top1_std": 0.1508718593789284,
+  "train_top1_20trips": 0.7935633631034347,
+  "st_top1": 0.8653444676409185,
+  "st_macro_f1": 0.9154494576754261,
+  "st_log_loss": 0.07183233586288215,
+  "st_route_continuity": 0.7223451327433629,
+  "train_seconds": 34.211,
+  "infer_ms_per_1k_rows": 0.561
+}

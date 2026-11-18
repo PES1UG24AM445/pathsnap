@@ -28,7 +28,8 @@ def main():
     tuned = read_result(expected)
     if json.loads(tuned["config"]) != search["full_config"]:
         raise ValueError("Tuned result and search configurations differ. Rerun tuning.")
-    if not np.isclose(tuned["cv_top1"], search["best_cv_top1"], atol=1e-12, rtol=0):
+    confirmed_cv = search.get("refit_cv_top1", search["best_cv_top1"])
+    if not np.isclose(tuned["cv_top1"], confirmed_cv, atol=1e-12, rtol=0):
         raise ValueError("Tuned CV score differs from the search record. Rerun tuning.")
     winner = max((baseline, tuned), key=lambda row: (row["cv_top1"], row["cv_macro_f1"]))
     name = winner["model"]

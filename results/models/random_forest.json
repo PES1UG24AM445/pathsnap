@@ -1,0 +1,16 @@
+{
+  "model": "random_forest",
+  "family": "Ensemble (bagged trees)",
+  "config": "{\"n_estimators\": 150, \"max_depth\": 16, \"min_samples_leaf\": 10, \"max_features\": \"sqrt\", \"criterion\": \"gini\", \"max_samples\": 0.2}",
+  "cv_macro_f1": 0.8979676888647361,
+  "cv_macro_f1_std": 0.026985269761187754,
+  "cv_top1": 0.7508246262812673,
+  "cv_top1_std": 0.15296208063479055,
+  "train_top1_20trips": 0.8095369241059134,
+  "st_top1": 0.8614300626304802,
+  "st_macro_f1": 0.9211567651903587,
+  "st_log_loss": 0.06601174786046884,
+  "st_route_continuity": 0.7352888888888889,
+  "train_seconds": 105.725,
+  "infer_ms_per_1k_rows": 3.371
+}

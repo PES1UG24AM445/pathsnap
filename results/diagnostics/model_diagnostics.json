@@ -1,0 +1,62 @@
+{
+  "baseline": "lightgbm",
+  "tuned_candidate": "lightgbm_tuned",
+  "exported": "lightgbm",
+  "partitions": {
+    "train_oof": {
+      "lightgbm": {
+        "observations": 208417,
+        "candidate_recall": 0.9279425382766281,
+        "candidate_misses": 15018,
+        "ranking_errors_with_reference_present": 35502,
+        "top1": 0.7576013472989247,
+        "top1_when_reference_present": 0.816431315570401,
+        "top3": 0.871977813710014,
+        "mean_reciprocal_rank": 0.8221383961465145
+      },
+      "lightgbm_tuned": {
+        "observations": 208417,
+        "candidate_recall": 0.9279425382766281,
+        "candidate_misses": 15018,
+        "ranking_errors_with_reference_present": 35635,
+        "top1": 0.7569632035774433,
+        "top1_when_reference_present": 0.8157436181159158,
+        "top3": 0.868096172577093,
+        "mean_reciprocal_rank": 0.8191750466605684
+      }
+    },
+    "student_test": {
+      "lightgbm": {
+        "observations": 19160,
+        "candidate_recall": 0.9988517745302714,
+        "candidate_misses": 22,
+        "ranking_errors_with_reference_present": 2450,
+        "top1": 0.8709812108559499,
+        "top1_when_reference_present": 0.8719824433065106,
+        "top3": 0.9746868475991649,
+        "mean_reciprocal_rank": 0.924646449583819
+      },
+      "lightgbm_tuned": {
+        "observations": 19160,
+        "candidate_recall": 0.9988517745302714,
+        "candidate_misses": 22,
+        "ranking_errors_with_reference_present": 2506,
+        "top1": 0.8680584551148226,
+        "top1_when_reference_present": 0.8690563277249451,
+        "top3": 0.9738517745302714,
+        "mean_reciprocal_rank": 0.9228121281409382
+      }
+    }
+  },
+  "uncertainty_note": "The paired interval resamples whole student-test trips and weights each trip equally. With ten trips it is descriptive. The training OOF scores informed model selection.",
+  "paired_student_top1": {
+    "trips": 10,
+    "trips_improved": 1,
+    "trips_regressed": 9,
+    "mean_trip_top1_change_percentage_points": -0.27272741308643633,
+    "exploratory_95_percent_paired_trip_bootstrap_interval_pp": [
+      -0.36583064363231815,
+      -0.164440960163277
+    ]
+  }
+}

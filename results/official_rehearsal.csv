@@ -1,0 +1,11 @@
+request,status,round_trip_seconds,server_seconds
+1,pass,0.798,0.784
+2,pass,0.346,0.337
+3,pass,0.85,0.841
+4,pass,1.087,1.07
+5,pass,0.154,0.15
+6,pass,3.706,3.679
+7,pass,0.624,0.616
+8,pass,1.61,1.597
+9,pass,2.607,2.584
+10,pass,0.648,0.638

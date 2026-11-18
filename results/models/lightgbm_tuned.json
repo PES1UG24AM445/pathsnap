@@ -1,0 +1,16 @@
+{
+  "model": "lightgbm_tuned",
+  "family": "Gradient-boosted trees (Bayesian-tuned)",
+  "config": "{\"n_estimators\": 400, \"learning_rate\": 0.08890528335198394, \"num_leaves\": 16, \"min_child_samples\": 140, \"subsample\": 0.9413549242801477, \"subsample_freq\": 1, \"colsample_bytree\": 0.7243186887373967, \"reg_lambda\": 0.03549878832196503, \"reg_alpha\": 0.0006053891567028107}",
+  "cv_macro_f1": 0.8973740198179841,
+  "cv_macro_f1_std": 0.025433687355332628,
+  "cv_top1": 0.7506357075677357,
+  "cv_top1_std": 0.15191647830553154,
+  "train_top1_20trips": 0.8183892670260062,
+  "st_top1": 0.8680584551148226,
+  "st_macro_f1": 0.9217116555324718,
+  "st_log_loss": 0.06618857465305729,
+  "st_route_continuity": 0.7246376811594203,
+  "train_seconds": 28.339,
+  "infer_ms_per_1k_rows": 8.104
+}

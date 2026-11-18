@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
@@ -18,7 +20,7 @@ for info in find_trips():
     ncomp, _ = connected_components(g, directed=False)
     deg = np.bincount(A.ravel(), minlength=N)
     r = tr.route
-    ok = r is not None and r.min() >= 0 and r.max() < len(A)
+    ok = r is not None and len(r) > 0 and r.min() >= 0 and r.max() < len(A)
     rows.append(dict(
         tid=tr.tid,
         part=tr.part,
@@ -26,8 +28,8 @@ for info in find_trips():
         n_nan=int(np.isnan(raw).sum()),
         n_bad_range=int(((np.abs(raw[:, 0]) > 180) | (np.abs(raw[:, 1]) > 90)).sum()),
         duration_s=raw[:, 2].max() - raw[:, 2].min(),
-        pct_dt_1s=float((dt == 1).mean()),
-        max_dt=float(dt.max()),
+        pct_dt_1s=float((dt == 1).mean()) if dt.size else np.nan,
+        max_dt=float(dt.max()) if dt.size else 0.0,
         n_dt_nonpositive=int((dt <= 0).sum()),
         extent_x_km=np.ptp(tr.xy[:, 0]) / 1000,
         extent_y_km=np.ptp(tr.xy[:, 1]) / 1000,
@@ -40,6 +42,8 @@ for info in find_trips():
         route_connected_pct=float((A[r[:-1], 1] == A[r[1:], 0]).mean()) if ok and len(r) > 1 else np.nan
     ))
 
+if not rows or not any(row["part"] == "train" for row in rows):
+    raise SystemExit("Place the official training and student-test data in data/raw first.")
 df = pd.DataFrame(rows)
 df.to_csv(RES / 'eda_inventory.csv', index=False)
 print(df.groupby('part').size())

@@ -29,6 +29,15 @@ def save(name, unit, train_loss, validation_loss):
     plt.close(ax.figure)
 
 
+def batch_log_loss(model, features, labels, batch_size=25_000):
+    total_loss = 0.0
+    for start in range(0, len(features), batch_size):
+        end = start + batch_size
+        total_loss += log_loss(labels[start:end], model.predict_proba(features[start:end]),
+                               labels=[0, 1], normalize=False)
+    return total_loss / len(features)
+
+
 def main():
     table = load("train")
     validate_table(table, FEATURES, "train")
@@ -56,13 +65,18 @@ def main():
 
     (_, scaler), (_, network) = mlp.make().steps
     network.set_params(random_state=np.random.RandomState(SEED))
+    if len(train_x) > mlp.MAX_TRAIN_ROWS:
+        train_x = train_x.sample(mlp.MAX_TRAIN_ROWS, random_state=SEED)
+        train_y = train_y.loc[train_x.index]
+    train_y = train_y.to_numpy()
+    valid_y = valid_y.to_numpy()
     train_x = scaler.fit_transform(train_x)
     valid_x = scaler.transform(valid_x)
     train_loss, valid_loss = [], []
     for _ in range(mlp.CONFIG["max_iter"]):
         network.partial_fit(train_x, train_y, classes=[0, 1])
-        train_loss.append(log_loss(train_y, network.predict_proba(train_x), labels=[0, 1]))
-        valid_loss.append(log_loss(valid_y, network.predict_proba(valid_x), labels=[0, 1]))
+        train_loss.append(batch_log_loss(network, train_x, train_y))
+        valid_loss.append(batch_log_loss(network, valid_x, valid_y))
     save("mlp", "epoch", train_loss, valid_loss)
 
 

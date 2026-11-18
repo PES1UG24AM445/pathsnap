@@ -1,0 +1,6 @@
+Model,Algorithm Family,Key Configuration,CV Macro F1-score,Top-1 Accuracy,Route continuity,Student-Test Macro F1-score,Log Loss,Inference Time (ms/1k),Train Time (s)
+lightgbm,Gradient-boosted trees,"{""n_estimators"": 300, ""learning_rate"": 0.05, ""num_leaves"": 31, ""min_child_samples"": 30, ""subsample"": 0.85, ""subsample_freq"": 1, ""colsample_bytree"": 0.9, ""reg_lambda"": 0.5}",0.8977 ± 0.0276,0.8710,0.7295,0.9258,0.0640,8.60,23.27
+random_forest,Ensemble (bagged trees),"{""n_estimators"": 150, ""max_depth"": 16, ""min_samples_leaf"": 10, ""max_features"": ""sqrt"", ""criterion"": ""gini"", ""max_samples"": 0.2}",0.8980 ± 0.0270,0.8614,0.7353,0.9212,0.0660,3.37,105.72
+mlp,Multilayer perceptron,"{""hidden_layer_sizes"": [64, 32], ""alpha"": 0.001, ""learning_rate_init"": 0.001, ""max_iter"": 50, ""batch_size"": 1024, ""early_stopping"": false}",0.8932 ± 0.0245,0.8653,0.7223,0.9154,0.0718,0.56,34.21
+logreg,Linear / probabilistic,"{""C"": 1.0, ""max_iter"": 1000, ""solver"": ""lbfgs""}",0.8485 ± 0.0277,0.8428,0.7138,0.8869,0.1107,0.10,2.49
+knn,Instance-based,"{""n_neighbors"": 25, ""weights"": ""distance"", ""algorithm"": ""kd_tree"", ""leaf_size"": 40}",0.8729 ± 0.0225,0.8407,0.6936,0.8956,0.1137,349.93,0.31

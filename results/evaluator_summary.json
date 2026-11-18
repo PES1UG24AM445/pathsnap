@@ -1,0 +1,23 @@
+{
+  "split": "reserved evaluator",
+  "source_commit": "48ec0db858d29271b2018dc5e36342ccaa2632c6",
+  "model": "lightgbm",
+  "model_sha256": "acbd4d1d15d9468f7e2b749b322eda3a3730a6ec1b9a9b5d7bf661f6fe2d9376",
+  "decoder_config": {
+    "beta": 15.0,
+    "w": 0.5,
+    "jump": -20.0
+  },
+  "trips_successful": 10,
+  "observations": 19674,
+  "macro_top1_classifier_only": 0.8862727534097438,
+  "macro_top1_viterbi": 0.9395277122719802,
+  "pooled_top1_classifier_only": 0.8096980786825252,
+  "pooled_top1_viterbi": 0.9077970926095354,
+  "mean_route_continuity_classifier_only": 0.9875136582000259,
+  "mean_route_continuity_viterbi": 0.9993582484317426,
+  "trips_top1_improved": 10,
+  "trips_top1_unchanged": 0,
+  "trips_top1_declined": 0,
+  "median_server_seconds": 1.001
+}
