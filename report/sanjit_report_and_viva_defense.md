@@ -9,15 +9,17 @@
 
 ## 1. Report Section 3.1: Consolidated Model Comparison Table
 
-*Generated automatically by `python scripts/05_compare.py` into `results/model_comparison.csv`.*
+The table uses the merged five-baseline run. Regenerate it with `python scripts/05_compare.py --baselines`. The full CSV includes model configurations and timings.
 
-| Model | Algorithm Family | Key Configuration | CV Macro F1-score | Top-1 Accuracy | Route Continuity | Student-Test Macro F1 | Log Loss | Inference Time (ms/1k) | Train Time (s) |
-|---|---|---|---|---|---|---|---|---|---|
-| `random_forest` | Ensemble (bagged trees) | `n_estimators=150, max_depth=16, min_samples_leaf=10` | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* |
-| `knn` | Instance-based | `n_neighbors=25, weights='distance', algorithm='kd_tree'` | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* |
-| `logreg` | Linear / probabilistic | `C=1.0, solver='lbfgs', max_iter=1000` | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* |
-| `lightgbm` | Boosting (GBDT) | *[Harsha's model]* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* |
-| `mlp` | Neural network (MLP) | *[Harsha's model]* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* | *Calculated* |
+| Model | CV Top-1 | CV Macro F1 | Student Top-1 | Student Macro F1 | Student arc adjacency | Log loss | Inference ms/1k rows |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `lightgbm` | 75.12% | 0.8977 | 87.10% | 0.9258 | 72.95% | 0.0640 | 8.60 |
+| `random_forest` | 75.08% | 0.8980 | 86.14% | 0.9212 | 73.53% | 0.0660 | 3.37 |
+| `mlp` | 74.53% | 0.8932 | 86.53% | 0.9154 | 72.23% | 0.0718 | 0.56 |
+| `logreg` | 73.16% | 0.8485 | 84.28% | 0.8869 | 71.38% | 0.1107 | 0.10 |
+| `knn` | 72.62% | 0.8729 | 84.07% | 0.8956 | 69.36% | 0.1137 | 349.93 |
+
+Top-1 is measured per GPS observation. Macro F1 and log loss measure binary candidate scores. Arc adjacency checks direct connections between consecutive distinct choices.
 
 ---
 
@@ -28,7 +30,7 @@
 - **A1. Why suitable for PathSnap:**
   Logistic Regression serves as our rigorous linear probabilistic baseline. The candidate features consist of continuous geometric metrics (`dist`, `dist_rel`, `ang_diff`, `cos_diff`, `along_frac`) and topological integers (`out_deg`, `in_deg`). Logistic regression maps these linear combinations via the sigmoid function directly to posterior probabilities $P(y=1 \mid \mathbf{x})$, which serve as natural emission inputs for the downstream HMM.
 - **A2. Major Strengths & Limitations:**
-  - *Strengths:* Instant training (<2 seconds), low inference latency (<5 ms per 1k rows), convex loss landscape with global minimum guarantees, and easily interpretable coefficients (e.g., negative coefficient on `dist` and positive on `cos_diff`).
+  - *Strengths:* Low fit and inference cost on the recorded run, a convex objective, and interpretable feature coefficients.
   - *Limitations:* Completely linear decision boundary. It cannot capture multiplicative non-linear feature interactions (such as when an arc is moderately far but aligns with high vehicle speed) without manual feature engineering.
 - **B5. Initial Hyperparameters:**
   `C=1.0` (inverse regularization strength), `penalty='l2'` (Ridge penalty to stabilize collinear spatial features), `solver='lbfgs'`, `max_iter=1000`.
@@ -36,10 +38,9 @@
   Binary Cross-Entropy (Log Loss) with $L_2$ regularization:
   $$\mathcal{L}(\mathbf{w}) = -\frac{1}{N} \sum_{i=1}^N \Big[ y_i \log(\hat{p}_i) + (1 - y_i)\log(1 - \hat{p}_i) \Big] + \frac{1}{2C} \|\mathbf{w}\|_2^2$$
 - **C7 & C8. Student-Test Metrics:**
-  *(Extracted directly from `results/models/logreg.json`)*:
-  Top-1 Accuracy: `st_top1`, Macro F1: `st_macro_f1`, Log Loss: `st_log_loss`.
-- **C9. Overfitting vs. Underfitting Analysis:**
-  Compare `train_top1_20trips` vs. `cv_top1` vs. `st_top1`. Logistic Regression demonstrates **underfitting** relative to tree ensembles: the gap between train Top-1 and validation Top-1 is very small (<1.5%), but overall Top-1 is lower due to model bias (inability to model non-linear boundaries).
+  The student-test run measured **84.28% Top-1**, **0.8869 Macro F1**, and **0.1107 log loss**. Scoring took 0.10 ms per 1,000 candidate rows.
+- **C9. In-sample and validation comparison:**
+  The diagnostic on the first 20 training trips was 76.98%, and mean grouped CV was 73.16%. The 3.83-point gap should be read alongside trip composition and candidate coverage because the in-sample subset and validation folds differ.
 
 ---
 
@@ -49,17 +50,16 @@
   KNN is a non-parametric instance-based method that operates directly on local metric manifolds. If a GPS point has a candidate arc with spatial distance, heading offset, and speed profile similar to true traversed road arcs in the training set, it will naturally be surrounded by positive instances in the scaled feature space.
 - **A2. Major Strengths & Limitations:**
   - *Strengths:* Makes zero parametric assumptions about the underlying distribution; naturally models arbitrary non-linear decision regions and multi-modal clusters.
-  - *Limitations:* $O(N \cdot D)$ inference complexity. Scoring hundreds of thousands of candidate rows across 5 folds would take several hours without optimization. We mitigated this by setting `MAX_TRAIN_ROWS = 100_000`, using `algorithm='kd_tree'`, and weighting votes inversely by distance (`weights='distance'`).
+  - *Limitations:* Neighbor queries were the slowest inference method on the recorded run. We capped fitting at 100,000 rows and used a KD-tree. Distance weighting gives closer neighbors more influence on the prediction.
 - **B5. Initial Hyperparameters:**
   `n_neighbors=25`, `weights='distance'`, `algorithm='kd_tree'`, `leaf_size=40`, `metric='minkowski'` ($p=2$).
 - **B6. Loss Function / Optimization Objective:**
   Non-parametric distance-weighted probability voting over the $k$-nearest neighbors:
   $$\hat{p}(y=1 \mid \mathbf{x}) = \frac{\sum_{i \in \mathcal{N}_k(\mathbf{x}), y_i=1} \frac{1}{d(\mathbf{x}, \mathbf{x}_i)}}{\sum_{i \in \mathcal{N}_k(\mathbf{x})} \frac{1}{d(\mathbf{x}, \mathbf{x}_i)}}$$
 - **C7 & C8. Student-Test Metrics:**
-  *(Extracted directly from `results/models/knn.json`)*:
-  Top-1 Accuracy: `st_top1`, Macro F1: `st_macro_f1`, Log Loss: `st_log_loss`.
-- **C9. Overfitting vs. Underfitting Analysis:**
-  With `weights='distance'`, KNN has 100% in-sample accuracy on training points ($d \to 0$). Comparing `train_top1_20trips` (~1.000) with `cv_top1` (~0.84) highlights the classic instance-based memorization gap, though distance smoothing with $k=25$ preserves generalisation on unseen trips.
+  The student-test run measured **84.07% Top-1**, **0.8956 Macro F1**, and **0.1137 log loss**. Scoring took 349.93 ms per 1,000 candidate rows.
+- **C9. In-sample and validation comparison:**
+  The diagnostic on the first 20 training trips was 78.67%, and mean grouped CV was 72.62%. The 6.05-point gap should be read alongside trip composition and candidate coverage because the in-sample subset and validation folds differ.
 
 ---
 
@@ -68,19 +68,18 @@
 - **A1. Why suitable for PathSnap:**
   Random Forest combines bagging (bootstrap aggregation) with random feature subspace selection across 150 decorrelated decision trees. Spatial map-matching features exhibit strong threshold-based relationships (e.g., `dist < 15m AND ang_diff < 0.25 rad`), which decision tree splits isolate effectively.
 - **A2. Major Strengths & Limitations:**
-  - *Strengths:* Exceptional generalisation; handles collinear and unscaled features effortlessly; resistant to noise and outliers; provides low-variance well-calibrated probabilities.
-  - *Limitations:* Unconstrained trees can produce serialized joblib models exceeding 200 MB. To strictly respect GitHub and deployment constraints, we constrained `max_depth=16` and `min_samples_leaf=10`, compressing the model under 35 MB.
+  - *Strengths:* Tree averaging and randomized feature subsets can reduce variance. Tree splits learn interactions without feature scaling.
+  - *Limitations:* Tree depth and bootstrap sample size affect fit time and model size. The official run limited each tree to 20% of the fitting rows.
 - **B5. Initial Hyperparameters:**
-  `n_estimators=150`, `max_depth=16`, `min_samples_leaf=10`, `max_features='sqrt'`, `criterion='gini'`, `n_jobs=-1`.
+  `n_estimators=150`, `max_depth=16`, `min_samples_leaf=10`, `max_features='sqrt'`, `criterion='gini'`, `max_samples=0.2`, `n_jobs=-1`.
 - **B6. Loss Function / Optimization Objective:**
   Split criterion based on Gini Impurity reduction:
   $$I_G(t) = 1 - \sum_{k \in \{0, 1\}} p(k \mid t)^2$$
   The ensemble probability $\hat{p} = \frac{1}{B} \sum_{b=1}^B T_b(\mathbf{x})$.
 - **C7 & C8. Student-Test Metrics:**
-  *(Extracted directly from `results/models/random_forest.json`)*:
-  Top-1 Accuracy: `st_top1`, Macro F1: `st_macro_f1`, Log Loss: `st_log_loss`.
-- **C9. Overfitting vs. Underfitting Analysis:**
-  By setting `min_samples_leaf=10` and `max_depth=16`, Random Forest avoids pure memorization. The training score `train_top1_20trips` is close to `cv_top1` (difference typically <4%), demonstrating minimal overfitting and robust generalisation.
+  The student-test run measured **86.14% Top-1**, **0.9212 Macro F1**, and **0.0660 log loss**. Scoring took 3.37 ms per 1,000 candidate rows.
+- **C9. In-sample and validation comparison:**
+  The diagnostic on the first 20 training trips was 80.95%, and mean grouped CV was 75.08%. The 5.87-point gap should be read alongside trip composition and candidate coverage because the in-sample subset and validation folds differ.
 
 ---
 
@@ -89,20 +88,20 @@
 1. **Architecture Separation:**
    - **Laptop 1 (Backend Host):** Runs FastAPI (`api/main.py`) serving `/health`, `/trips`, and `/predict`. Stores ground truth and computes server-side verification metrics.
    - **Laptop 2 (Client UI):** Runs Streamlit (`ui/app.py`). Completely isolated from `pathsnap` code, model weights, and labels.
-2. **Commands Executed:**
+2. **Two-laptop commands:**
    ```powershell
-   # Laptop 1 (PowerShell Admin)
-   New-NetFirewallRule -DisplayName "PathSnap" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
-   $env:EVAL_DIR = "data/raw/student"
-   uvicorn api.main:app --host 0.0.0.0 --port 8000
+   # Laptop 1 (PowerShell)
+   python scripts/12_check_server.py
+   $env:EVAL_DIR = "data/raw/student_test"
+   python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 
    # Laptop 2
    $env:API_URL = "http://<LAPTOP1_IP>:8000"
-   streamlit run ui/app.py
+   python -m streamlit run ui/app.py
    ```
 3. **Evidence Artifacts:**
-   - Screenshot of Laptop 1 terminal displaying `PREDICT request trip_id=...` and `DONE trip_id=... in X.Xs`.
-   - Screenshot of Laptop 2 Streamlit dashboard showing the 5 KPI metric cards, delta improvement badge, and Folium trajectory map.
+   - Local FastAPI and Streamlit tests verified trip selection, server-computed metrics, and the returned route using the official student-test data. All ten API requests passed.
+   - The physical rehearsal still requires the Laptop 2 dashboard screenshot and the corresponding Laptop 1 request log. The [compiled PDF](report.pdf) records the local evidence.
 
 ---
 
@@ -112,13 +111,13 @@
 > **Answer:** "A single vehicle trip produces hundreds of consecutive GPS observations spaced ~1 second apart. Consecutive points share extreme spatial and temporal autocorrelation (same street, same vehicle speed, same heading). If we used standard random K-Fold, observations from trip X would be present in both the training fold and the validation fold. The model would memorize the specific road geometry of trip X, resulting in catastrophic data leakage and artificially inflated scores. By using `GroupKFold(5)` grouped by `tid`, every trip exists in exactly one fold, ensuring our cross-validation faithfully mimics evaluating completely unseen trips on evaluation day."
 
 ### Q2. Why is Top-1 Accuracy the primary metric instead of Macro F1 or Binary Accuracy?
-> **Answer:** "In map-matching, the physical task is to pick exactly ONE true road arc for each GPS observation. For each point, our candidate generator produces $K=12$ candidate arcs (1 positive, 11 negatives). If a model predicted '0' for all 12 rows, binary accuracy would be $11/12 = 91.7\%$, but the car would have zero matched route. Top-1 Accuracy measures whether the single arc with $\operatorname{argmax} P(\text{arc})$ matches the true reference arc. It is the only metric that directly measures decision correctness at the observation level."
+> **Answer:** "In map-matching, the physical task is to pick exactly ONE true road arc for each GPS observation. The generator returns up to 12 candidates. With one reference arc among 12, labeling every row negative would score 91.7% binary accuracy while giving no useful road ranking. Top-1 Accuracy measures whether the single arc with $\operatorname{argmax} P(\text{arc})$ matches the true reference arc. It is the only metric that directly measures decision correctness at the observation level."
 
 ### Q3. Why was KNN subsampled and scaled? How do you read overfitting from train vs. CV vs. student numbers?
 > **Answer:** "KNN computes Euclidean distances across all feature dimensions:
 > $$d(\mathbf{x}, \mathbf{z}) = \sqrt{\sum (x_j - z_j)^2}$$
-> If features are unscaled, `arc_len` (measured in hundreds of meters) completely swamps `cos_diff` (bounded in $[-1, 1]$). `StandardScaler` ensures every feature contributes equally. We subsampled training rows (`MAX_TRAIN_ROWS=100_000`) and utilized `algorithm='kd_tree'` because standard brute-force KNN requires $O(N_{\text{train}} \cdot N_{\text{val}})$ operations, which would stall for hours.
-> To detect overfitting: if `train_top1` is 99% while `cv_top1` is 80%, the model has memorized noise. If both are around 80%, the model has high bias (underfitting). When `cv_top1` matches `student_top1`, the model generalises stably."
+> If features are unscaled, `arc_len` (measured in hundreds of meters) completely swamps `cos_diff` (bounded in $[-1, 1]$). `StandardScaler` puts features on a comparable numerical scale. We subsampled training rows (`MAX_TRAIN_ROWS=100_000`) and utilized `algorithm='kd_tree'` because standard brute-force KNN requires $O(N_{\text{train}} \cdot N_{\text{val}})$ operations, which would stall for hours.
+> Compare in-sample and grouped-validation scores, then check candidate coverage and fold composition. Those differences can affect scores even when the fitting policy stays the same."
 
 ### Q4. What does Route Continuity measure, and what are its blind spots?
 > **Answer:** "Route continuity measures topological sanity. For consecutive distinct predicted arcs $a_t$ and $a_{t+1}$, it checks whether the end node of arc $a_t$ is identical to the start node of arc $a_{t+1}$:
@@ -130,7 +129,7 @@
 > 1. Group-aware CV by trip (`GroupKFold` on `tid`).
 > 2. `StandardScaler` is wrapped inside a `Pipeline`, fitted strictly on training folds and never on validation folds.
 > 3. The `evaluator/` directory is never touched by any feature extraction or training script.
-> 4. The UI runs on a separate machine without access to model weights or route labels, receiving only pre-computed predictions over HTTP."
+> 4. The UI is designed to run separately from the API and receives request-time predictions and aggregate scores over HTTP."
 
 ### Q6. Why does the classifier output need an HMM at all?
 > **Answer:** "A classifier makes independent pointwise decisions:
