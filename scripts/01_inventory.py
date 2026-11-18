@@ -1,7 +1,14 @@
+"""Count trips without reading the reserved evaluator observations."""
 
-import pandas as pd
+from collections import Counter
+
 from pathsnap.io import find_trips
-df = pd.DataFrame(find_trips())
-print(df.groupby('part').size())
-print(df.head(3).to_string())
-print('missing files:', df[['nodes', 'arcs', 'route']].isna().sum().to_dict())
+
+trips = find_trips()
+if not trips:
+    raise SystemExit("No .track files found. See README.md for the data layout.")
+for part, count in sorted(Counter(t["part"] for t in trips).items()):
+    print(f"{part}: {count} trips")
+for part in ("train", "student"):
+    missing = sum(info["route"] is None for info in trips if info["part"] == part)
+    print(f"{part}: {missing} missing reference routes")
