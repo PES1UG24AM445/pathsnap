@@ -19,14 +19,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--trials", type=int, default=20, help="Target completed trials")
     parser.add_argument("--timeout", type=float, help="Time budget in seconds for this invocation")
+    parser.add_argument("--search-fit-cap", type=int, default=350_000,
+                        help="Maximum fitting rows per fold during search; final CV uses the baseline policy")
     args = parser.parse_args()
     if args.trials < 6 or (args.timeout is not None and args.timeout <= 0):
         parser.error("Use at least six trials and a positive timeout.")
+
+    if args.search_fit_cap < 100:
+        parser.error("--search-fit-cap must be at least 100.")
 
     winner = selection.best_baseline()
     name = winner["model"]
     module = selection.baseline(name)
     cap = getattr(module, "MAX_TRAIN_ROWS", None)
+    search_cap = min(cap, args.search_fit_cap) if cap else args.search_fit_cap
     train, student = load("train"), load("student")
     selection.validate_table(train, FEATURES, "train")
     selection.validate_table(student, FEATURES, "student")
@@ -35,7 +41,7 @@ def main():
 
     def objective(trial):
         overrides = selection.search_params(name, trial)
-        _, folds = cv_oof(lambda: selection.configured_model(name, overrides), train, cap)
+        _, folds = cv_oof(lambda: selection.configured_model(name, overrides), train, search_cap)
         trial.set_user_attr("cv_macro_f1", float(folds["macro_f1"].mean()))
         trial.set_user_attr("fold_top1", folds["top1"].tolist())
         trial.set_user_attr("fold_macro_f1", folds["macro_f1"].tolist())
@@ -47,6 +53,7 @@ def main():
     for source in sources:
         with source.open("rb") as stream:
             fingerprint.update(hashlib.file_digest(stream, "sha256").digest())
+    fingerprint.update(str(search_cap).encode("ascii"))
     study_name = f"{name}-{fingerprint.hexdigest()[:16]}"
     study = optuna.create_study(
         direction="maximize",
@@ -84,6 +91,10 @@ def main():
         "completed_trials": len(completed), "best_trial": best_trial.number,
         "best_cv_top1": best_trial.value, "best_params": params,
         "best_cv_macro_f1": best_trial.user_attrs["cv_macro_f1"],
+        "search_fit_row_cap": search_cap,
+        "final_fit_row_cap": cap,
+        "refit_cv_top1": tuned["cv_top1"],
+        "refit_cv_macro_f1": tuned["cv_macro_f1"],
         "best_fold_top1": best_trial.user_attrs["fold_top1"],
         "best_fold_macro_f1": best_trial.user_attrs["fold_macro_f1"],
         "full_config": module.CONFIG | params,

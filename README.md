@@ -36,7 +36,7 @@ python scripts/10_maps.py
 python scripts/13_model_diagnostics.py
 ```
 
-Use the 80 training trips for grouped cross-validation and tuning. The classifier and decoder comparisons use the 10 student-test trips as development evidence. Use the same inputs and feature definitions for all five runs. The random forest draws 20% of fitting rows per tree and the MLP uses batches of 1,024 rows to keep training practical on a laptop. The six-trial search includes five startup trials and one TPE-guided trial. A larger search can resume from the same study.
+Use the 80 training trips for grouped cross-validation and tuning. The classifier and decoder comparisons use the 10 student-test trips as development evidence. Use the same inputs and feature definitions for all five runs. The random forest draws 20% of fitting rows per tree and the MLP uses batches of 1,024 rows to keep training practical on a laptop. The six-trial search includes five startup trials and one TPE-guided trial. Search fits use at most 350,000 fitting rows per fold and score complete validation trips. The selected configuration reruns CV with the baseline fitting policy before comparison and export. A larger search can resume from the same study.
 
 The final model and HMM settings are bound by the model SHA-256. If you replace or re-export the model, rerun decoder evaluation before serving. The decoder reports Top-1, bounded directed-route continuity, and arc-overlap F1. Its route continuity measures successful transitions after allowing intermediate arcs, while the classifier comparison table's continuity measures direct adjacency between independently selected arcs.
 

@@ -4,8 +4,9 @@ from collections import Counter
 import json
 
 import pandas as pd
+from sklearn.model_selection import GroupKFold
 
-from pathsnap.config import ART, RES, ROOT
+from pathsnap.config import ART, PROC, RES, ROOT
 
 
 MODELS = {
@@ -42,6 +43,16 @@ def main():
     tuned = read_json(RES / "models" / f"{search['tuned']}.json")
     inventory = pd.read_csv(RES / "eda_inventory.csv")
     coverage = pd.read_csv(RES / "candidate_stats.csv").set_index("part")
+    candidates = pd.read_parquet(PROC / "train.parquet", columns=["tid", "obs", "label"])
+    folds = []
+    for fold, (_, validation) in enumerate(GroupKFold(n_splits=5).split(candidates, groups=candidates["tid"]), 1):
+        held_out = candidates.iloc[validation]
+        has_reference = held_out.groupby(["tid", "obs"])["label"].max().eq(1)
+        folds.append({"fold": fold, "trips": held_out["tid"].nunique(),
+                      "observations": len(has_reference), "candidate_recall": has_reference.mean()})
+    fold_coverage = pd.DataFrame(folds)
+    fold_coverage.to_csv(RES / "cv_candidate_coverage.csv", index=False)
+    weakest = fold_coverage.loc[fold_coverage["candidate_recall"].idxmin()]
     route = pd.read_csv(RES / "hmm_vs_classifier_per_trip.csv")
     rehearsal = pd.read_csv(RES / "rehearsal.csv")
     trips = Counter(inventory["part"])
@@ -83,6 +94,10 @@ def main():
         "within 200 m, with a nearest-arc fallback. Features include distance and relative rank, heading "
         "alignment, position along the arc, speed, timing, and road connectivity. Point labels are "
         "derived by monotonically aligning the supplied reference route to the GPS observations.",
+        "",
+        f"Training fold {int(weakest['fold'])} had the lowest reference-candidate coverage, "
+        f"{percent(weakest['candidate_recall'])}. That coverage bounds the Top-1 accuracy that any "
+        "classifier can reach on the fold. Per-fold coverage is in `results/cv_candidate_coverage.csv`.",
         "",
         "![Development partition inventory](../results/figs/eda_hist.png)",
         "",
@@ -137,6 +152,10 @@ def main():
         f"using grouped training CV Top-1. The best search configuration was "
         f"`{json.dumps(search['best_params'], sort_keys=True)}`. Completed search trials took "
         f"{search['completed_trial_seconds'] / 60:.1f} minutes in total.",
+        "",
+        f"During search, each fitting fold was capped at {search['search_fit_row_cap']:,} "
+        "candidate rows. Entire held-out validation trips were scored. The winning trial was rerun "
+        "under the same fitting policy as its baseline before the final comparison.",
         "",
         "The search covered these ranges.",
         "",
