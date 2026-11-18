@@ -63,7 +63,7 @@ On PowerShell use `$env:EVAL_DIR = 'data/raw/student'` and `$env:API_URL = 'http
 
 ## Evidence for the final PDF
 
-- **Dataset and EDA:** `results/eda_inventory.csv`, `results/figs/eda_inventory.png`, `results/candidate_stats.csv` and a map.
+- **Dataset and EDA:** `results/eda_inventory.csv`, `results/figs/eda_hist.png`, `results/figs/eda_trip.png`, `results/candidate_stats.csv` and a map.
 - **Models:** `results/model_comparison.csv`, per-model results and comparison figures. Each owner explains parameters, why the model suits this task, and the measured results and limitations.
 - **Tuning:** `results/optuna_trials.csv`, `results/best_params.json`, `results/tuned_vs_untuned.csv` and the student diagnostic chart.
 - **Reconstruction:** `results/hmm_grid.csv`, `results/hmm_vs_classifier.csv`, per-trip comparison, and representative Folium maps generated in `results/maps/`. Use eligible student-test imagery and follow the organizer's data-sharing rules.
