@@ -120,7 +120,7 @@ Viterbi improved Top-1 on 10 of 10 trips and reduced it on 0. The largest decrea
 
 The map generator renders noisy GPS points, the road network, the reference route, classifier picks, and Viterbi reconstruction as separate layers. It can regenerate interactive student maps from the team's development data.
 
-![Student-test route with local coordinates](../results/figs/student_route_rehearsal.png)
+![Static export of the student-test Folium comparison layers](../results/figs/folium_student_comparison.png)
 
 ## 7. API and deployment
 

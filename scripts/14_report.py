@@ -223,12 +223,15 @@ def main():
         "",
     ]
 
-    if (RES / "figs" / "student_route_rehearsal.png").is_file():
-        heading = lines.index("## 7. API and deployment")
-        lines[heading:heading] = [
-            "![Student-test route with local coordinates](../results/figs/student_route_rehearsal.png)",
-            "",
-        ]
+    figures = (
+        ("folium_student_comparison.png", "Static export of the student-test Folium comparison layers"),
+        ("student_route_rehearsal.png", "Student-test route with local coordinates"),
+    )
+    for filename, caption in figures:
+        if (RES / "figs" / filename).is_file():
+            heading = lines.index("## 7. API and deployment")
+            lines[heading:heading] = [f"![{caption}](../results/figs/{filename})", ""]
+            break
     (ROOT / "report" / "official_development_results.md").write_text(
         "\n".join(lines), encoding="utf-8"
     )
