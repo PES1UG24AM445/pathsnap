@@ -13,6 +13,7 @@ CONFIG = {
     "alpha": 0.001,
     "learning_rate_init": 0.001,
     "max_iter": 50,
+    "batch_size": 1024,
     "early_stopping": False,
 }
 

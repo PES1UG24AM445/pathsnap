@@ -1,0 +1,16 @@
+{
+  "model": "knn",
+  "family": "Instance-based",
+  "config": "{\"n_neighbors\": 25, \"weights\": \"distance\", \"algorithm\": \"kd_tree\", \"leaf_size\": 40}",
+  "cv_macro_f1": 0.8729276513610177,
+  "cv_macro_f1_std": 0.02250347473717324,
+  "cv_top1": 0.7261742672524292,
+  "cv_top1_std": 0.1481176011231297,
+  "train_top1_20trips": 0.7866978793720738,
+  "st_top1": 0.8407098121085596,
+  "st_macro_f1": 0.895588536314412,
+  "st_log_loss": 0.11373897863971338,
+  "st_route_continuity": 0.6936266020090059,
+  "train_seconds": 0.308,
+  "infer_ms_per_1k_rows": 349.929
+}

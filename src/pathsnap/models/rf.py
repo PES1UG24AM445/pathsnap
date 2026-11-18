@@ -28,7 +28,8 @@ CONFIG = {
     'max_depth': 16,
     'min_samples_leaf': 10,
     'max_features': 'sqrt',
-    'criterion': 'gini'
+    'criterion': 'gini',
+    'max_samples': 0.20
 }
 
 

@@ -1,0 +1,16 @@
+{
+  "model": "logreg",
+  "family": "Linear / probabilistic",
+  "config": "{\"C\": 1.0, \"max_iter\": 1000, \"solver\": \"lbfgs\"}",
+  "cv_macro_f1": 0.848478686865116,
+  "cv_macro_f1_std": 0.027717076621592514,
+  "cv_top1": 0.73155691646492,
+  "cv_top1_std": 0.14902981449470887,
+  "train_top1_20trips": 0.7698194122044301,
+  "st_top1": 0.8427974947807934,
+  "st_macro_f1": 0.8869358830835304,
+  "st_log_loss": 0.11069926309856992,
+  "st_route_continuity": 0.713759625041848,
+  "train_seconds": 2.487,
+  "infer_ms_per_1k_rows": 0.1
+}
