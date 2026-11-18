@@ -1,10 +1,10 @@
 # PathSnap training and deployment handoff
 
-Merge the included src/ and scripts/ directories into the team's PathSnap repository. This package uses the Build Guide's config and FEATURES modules, Rishi's processed candidate tables, and Sanjit's experiment harness and three baseline modules. Use Python 3.11+ and install the team's dependencies and editable package from the repo root. Match package versions on the training and serving machines. On macOS, LightGBM may require Homebrew libomp.
+Run from the PathSnap repository root. The training workflow uses the Build Guide's config and FEATURES modules, Rishi's processed candidate tables, and Sanjit's experiment harness and three baseline modules. Use Python 3.11+ and install the team's dependencies and editable package from the repo root. Match package versions on the training and serving machines. On macOS, LightGBM may require Homebrew libomp.
 
 ## Training and export
 
-1. Rishi verifies the explicit partition roots, exact trip-file pairing, and reference-alignment traceback before building the processed tables. Check provenance before training. Counts and disjoint IDs alone cannot establish where rows came from.
+1. Rishi verifies the explicit partition roots and exact trip-file pairing before building the processed tables. Check provenance before training. Counts and disjoint IDs alone cannot establish where rows came from.
 2. Run Harsha's baselines and have Sanjit run LogReg, KNN, and RandomForest using the same harness, features, and splits. Rerun all five if the feature snapshot or grouped folds change.
 3. Generate the loss curves. LightGBM records loss by boosting round. The MLP plot comes from a separate epoch-by-epoch diagnostic fit on the same held-out training-trip split as LightGBM. Its scaler only sees the fitting trips. The MLP baseline uses outer grouped CV and disables scikit-learn's row-wise early-stopping split.
 4. Tune the best of the five baselines by grouped-CV observation Top-1, then candidate-row Macro F1. The search reuses each team's baseline estimator and preprocessing. If LightGBM wins, the search covers row and feature subsampling, tree capacity, learning rate, and L1/L2 regularization. The trial budget is a target for the number of completed trials. Repeat the command to resume the same study. A change to the training table, model or search source starts a fresh study. Five startup trials precede TPE. Each trial fits five folds, and the optional timeout applies between trials. Keep the database, CSV, and search metadata, including per-fold scores.
@@ -18,7 +18,7 @@ python scripts/08_finalize.py
 python scripts/13_model_diagnostics.py
 ```
 
-Use the exact name from artifacts/final_model_name.txt in decoder evaluation and map generation. Shailaja regenerates artifacts/hmm_config.json for that export. Keep final_model.joblib, final_model_name.txt, final_model_manifest.json, and the matching hmm_config.json together. The Build Guide API and UI exchange a flat predicted_route list of latitude/longitude pairs. If the team adds separate route segments to show gaps, update the API, UI, and rehearsal check together.
+Run `python scripts/09_decode_eval.py` to tune the decoder for the export. The script reads the model name from the manifest and records the model checksum with the decoder settings. Run `python scripts/10_maps.py` for student-test comparison maps. The updated UI draws disconnected pieces separately.
 
 ## Diagnose where the model gains or loses
 
@@ -40,7 +40,7 @@ $env:EVAL_DIR = 'data/raw/student'
 python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
-The preflight checks the copied model's checksum, feature and class order, package versions, and a smoke prediction. It also checks whether the HMM settings fit the decoder's API. Confirm with Shailaja that the settings were generated for this exact model.
+The preflight checks the copied model's checksum, feature and class order, package versions, and a smoke prediction. It also checks whether the HMM settings fit the decoder's API. It verifies that the HMM settings were generated for this model checksum.
 
 **Sanjit / Laptop 2** points the UI at Laptop 1's LAN address, then checks that selecting a trip displays the matching route and scores. Check map tiles on the demo network.
 

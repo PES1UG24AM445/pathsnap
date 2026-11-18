@@ -24,6 +24,11 @@ def check_response(trip_id, result):
             for point in result[field]
         ):
             raise ValueError(f"{field} contains missing or invalid coordinates")
+    segments = result.get("predicted_route_segments")
+    if segments is not None:
+        if (not segments or any(len(segment) < 2 for segment in segments)
+                or [point for segment in segments for point in segment] != result["predicted_route"]):
+            raise ValueError("Route segments differ from the flat route payload")
     if not math.isfinite(result["seconds"]) or result["seconds"] < 0:
         raise ValueError("Invalid inference timing")
 

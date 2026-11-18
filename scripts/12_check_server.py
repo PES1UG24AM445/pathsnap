@@ -28,6 +28,10 @@ def main():
     if digest != manifest["sha256"]:
         raise ValueError("Model checksum differs from the export manifest.")
 
+    decoder_hash = (ART / "hmm_model_sha256.txt").read_text(encoding="utf-8").strip()
+    if decoder_hash != digest:
+        raise ValueError("HMM settings are stale. Rerun scripts/09_decode_eval.py for this export.")
+
     python = ".".join(map(str, sys.version_info[:2]))
     if "python" in manifest and python != manifest["python"]:
         print(f"Python version differs from export ({python} vs {manifest['python']}).")

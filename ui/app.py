@@ -132,7 +132,7 @@ if res and st.session_state.get("current_trip") == selected_tid:
     # Map Visualization
     st.subheader("3. Trajectory & Reconstructed Route Map")
     gps_pts = res.get("gps", [])
-    predicted_route = res.get("predicted_route", [])
+    segments = res.get("predicted_route_segments") or [res.get("predicted_route", [])]
 
     if gps_pts:
         mid_idx = len(gps_pts) // 2
@@ -153,14 +153,13 @@ if res and st.session_state.get("current_trip") == selected_tid:
         fg_gps.add_to(m)
 
         # Reconstructed Route Layer
-        if predicted_route:
+        if any(segments):
             fg_route = folium.FeatureGroup(name="Reconstructed Route (Red Polyline)")
-            folium.PolyLine(
-                locations=predicted_route,
-                color="#d62728",
-                weight=4,
-                opacity=0.85
-            ).add_to(fg_route)
+            for segment in segments:
+                if segment:
+                    folium.PolyLine(
+                        locations=segment, color="#d62728", weight=4, opacity=0.85
+                    ).add_to(fg_route)
             fg_route.add_to(m)
 
         # Bounding box auto-fit
