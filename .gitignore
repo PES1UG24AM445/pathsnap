@@ -5,3 +5,5 @@ __pycache__/
 .ipynb_checkpoints/
 artifacts/models/
 results/oof/
+.pytest_cache/
+results/preds/

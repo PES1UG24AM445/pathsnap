@@ -7,6 +7,10 @@ def arc_lines(trip, idx=None):
 
 def reference_arcs(trip):
     route = trip.route
+    if route is None or not len(route):
+        raise ValueError(f"{trip.tid}: reference route is missing or empty")
+    if (route < 0).any() or (route >= len(trip.arcs)).any():
+        raise ValueError(f"{trip.tid}: reference arc ID is outside the road network")
     d = shapely.distance(shapely.points(trip.xy)[:, None], arc_lines(trip, route)[None, :])
     n, r = d.shape
     cost = np.empty_like(d)

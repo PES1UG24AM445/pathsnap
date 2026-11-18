@@ -5,8 +5,11 @@ from pathsnap.features import build_table
 from pathsnap.config import PROC, RES
 
 stats = []
-for part in ('train', 'student'):  # evaluator is never processed here
-    infos = [i for i in find_trips() if i['part'] == part]
+trips = find_trips()
+for part, expected in (('train', 80), ('student', 10)):  # evaluator is never processed here
+    infos = [i for i in trips if i['part'] == part]
+    if len(infos) != expected or any(info['route'] is None for info in infos):
+        raise ValueError(f"Expected {expected} {part} trips with reference routes, found {len(infos)}.")
     df = pd.concat([build_table(load_trip(i)) for i in tqdm(infos, desc=part)], ignore_index=True)
     df.to_parquet(PROC / (part + '.parquet'))
     has_pos = df.groupby(['tid', 'obs'])['label'].max()
