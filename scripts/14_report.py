@@ -24,7 +24,7 @@ MODELS = {
                  "Leaf capacity and boosting rounds affect runtime and overfitting."),
     "mlp": ("Multilayer perceptron", "Binary cross-entropy with L2 regularization",
             "Learns nonlinear combinations of standardized candidate features.",
-            "Convergence depends on optimization settings, and training is iterative."),
+            "Each fitting fold is capped at 400,000 candidate rows. Convergence depends on optimization settings."),
 }
 
 

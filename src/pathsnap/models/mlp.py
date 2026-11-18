@@ -8,6 +8,7 @@ from ..config import SEED
 
 NAME = "mlp"
 FAMILY = "Multilayer perceptron"
+MAX_TRAIN_ROWS = 400_000
 CONFIG = {
     "hidden_layer_sizes": (64, 32),
     "alpha": 0.001,

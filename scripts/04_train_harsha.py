@@ -18,7 +18,8 @@ def main():
         raise ValueError("Training and student trip IDs overlap.")
     for name in args.model or ("lightgbm", "mlp"):
         module = baseline(name)
-        evaluate(module.NAME, module.FAMILY, module.CONFIG, module.make)
+        evaluate(module.NAME, module.FAMILY, module.CONFIG, module.make,
+                 cap=getattr(module, "MAX_TRAIN_ROWS", None))
 
 
 if __name__ == "__main__":
