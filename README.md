@@ -27,7 +27,7 @@ python scripts/04_train_model.py logreg
 python scripts/04_train_model.py knn
 python scripts/04_train_model.py rf
 python scripts/04_train_harsha.py
-python scripts/05_compare.py
+python scripts/05_compare.py --baselines
 python scripts/06_curves.py
 python scripts/07_tune.py --trials 6
 python scripts/08_finalize.py
@@ -62,6 +62,8 @@ python scripts/11_rehearse.py http://LAPTOP1_IP:8000 --student
 On PowerShell use `$env:EVAL_DIR = 'data/raw/student'` and `$env:API_URL = 'http://LAPTOP1_IP:8000'`. Verify all ten student trips through the UI and capture the UI and receiving-terminal evidence. For official evaluation, switch Laptop 1 to the authorized evaluator directory and restart the API. Ground truth stays on Laptop 1 and is loaded only to score completed predictions.
 
 ## Evidence for the final PDF
+
+The [compiled technical report](report/report.pdf) includes the measured results and labels the local deployment evidence.
 
 After the local rehearsal has written `results/rehearsal.csv`, run `python scripts/14_report.py` on the same checkout that holds the generated metrics. It compiles the measured results into `report/official_development_results.md`. The physical two-laptop screenshots and evaluation evidence still need to come from the live rehearsal.
 

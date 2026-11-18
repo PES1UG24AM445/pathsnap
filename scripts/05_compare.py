@@ -9,6 +9,7 @@ Generates:
 - results/figs/confusion_matrices.png (Side-by-side student-test confusion matrices)
 """
 
+import argparse
 import glob
 import json
 import sys
@@ -25,6 +26,7 @@ import pandas as pd
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 from pathsnap.config import RES
+from pathsnap.model_selection import MODULES, read_result
 
 # Ensure figures output directory exists
 FIG_DIR = RES / 'figs'
@@ -43,21 +45,28 @@ def finish_plot(title: str, fname: str, x: np.ndarray, labels: list):
 
 
 def main():
-    model_json_files = sorted(glob.glob(str(RES / 'models' / '*.json')))
-    # Exclude non-model or tuning files if any
-    model_json_files = [f for f in model_json_files if not f.endswith('best_params.json')]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baselines", action="store_true",
+                        help="Require and compare the five submitted baselines.")
+    args = parser.parse_args()
 
-    if not model_json_files:
-        print(f"[WARNING] No model result files found in {RES / 'models'}. Please train models first using 04_train_model.py.")
-        sys.exit(0)
+    if args.baselines:
+        rows = [read_result(name) for name in MODULES]
+    else:
+        model_json_files = sorted(glob.glob(str(RES / 'models' / '*.json')))
+        model_json_files = [f for f in model_json_files if not f.endswith('best_params.json')]
 
-    rows = []
-    for f in model_json_files:
-        try:
-            with open(f, 'r') as fp:
-                rows.append(json.load(fp))
-        except Exception as e:
-            print(f"Warning: Could not read {f}: {e}")
+        if not model_json_files:
+            print(f"[WARNING] No model result files found in {RES / 'models'}. Please train models first using 04_train_model.py.")
+            return
+
+        rows = []
+        for f in model_json_files:
+            try:
+                with open(f, 'r', encoding='utf-8') as fp:
+                    rows.append(json.load(fp))
+            except (OSError, ValueError) as e:
+                print(f"Warning: Could not read {f}: {e}")
 
     df = pd.DataFrame(rows)
     if df.empty:
@@ -65,7 +74,9 @@ def main():
         sys.exit(1)
 
     # Rank by primary selection metric (cv_top1 descending)
-    df = df.sort_values('cv_top1', ascending=False).reset_index(drop=True)
+    df = df.sort_values(
+        ['cv_top1', 'cv_macro_f1', 'model'], ascending=[False, False, True]
+    ).reset_index(drop=True)
 
     # Export machine-readable internal comparison
     df.to_csv(RES / 'model_comparison_raw.csv', index=False)
@@ -90,7 +101,16 @@ def main():
     print("\n" + "=" * 90)
     print("CONSOLIDATED MODEL COMPARISON TABLE (Table 3.1)")
     print("=" * 90)
-    print(report_table.to_string(index=False))
+    console = pd.DataFrame({
+        'Model': df['model'],
+        'CV Top-1': df['cv_top1'].map(lambda v: f'{v:.2%}'),
+        'Student Top-1': df['st_top1'].map(lambda v: f'{v:.2%}'),
+        'Student F1': report_table['Student-Test Macro F1-score'],
+        'Log loss': report_table['Log Loss'],
+        'ms/1k': report_table['Inference Time (ms/1k)'],
+    })
+    print(console.to_string(index=False))
+    print(f"Full comparison: {RES / 'model_comparison.csv'}")
     print("=" * 90 + "\n")
 
     # Generate Required Comparison Figures
@@ -129,7 +149,7 @@ def main():
         for ax, name in zip(axes, available_preds):
             pred_file = RES / 'preds' / f"{name}_student.parquet"
             p_df = pd.read_parquet(pred_file)
-            cm = confusion_matrix(p_df['label'], p_df['p'] >= 0.5)
+            cm = confusion_matrix(p_df['label'], p_df['p'] >= 0.5, labels=[0, 1])
             disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['0 (Other)', '1 (Ref)'])
             disp.plot(ax=ax, colorbar=False, cmap='Blues')
             ax.set_title(name, fontsize=11, fontweight='bold')
