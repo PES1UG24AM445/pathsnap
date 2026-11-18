@@ -1,0 +1,39 @@
+{
+  "model": "lightgbm",
+  "baseline": "lightgbm",
+  "tuned_candidate": "lightgbm_tuned",
+  "selection": "highest grouped-CV Top-1, then Macro F1, then baseline",
+  "feature_order": [
+    "dist",
+    "dist_rel",
+    "rank",
+    "n_cand",
+    "along_frac",
+    "remaining",
+    "arc_len",
+    "ang_diff",
+    "cos_diff",
+    "has_rev",
+    "out_deg",
+    "in_deg",
+    "speed",
+    "step_prev",
+    "gap_prev",
+    "turn"
+  ],
+  "class_order": [
+    0,
+    1
+  ],
+  "sha256": "acbd4d1d15d9468f7e2b749b322eda3a3730a6ec1b9a9b5d7bf661f6fe2d9376",
+  "bytes": 470040,
+  "python": "3.12",
+  "model_package_versions": {
+    "joblib": "1.6.0",
+    "numpy": "2.5.5",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.8.0",
+    "scipy": "1.18.1",
+    "lightgbm": "4.7.0"
+  }
+}
